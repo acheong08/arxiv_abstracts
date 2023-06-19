@@ -8,9 +8,9 @@ import (
 )
 
 type Document struct {
-	Abstract   *string
-	Embeddings *[]float32
-	Doi        *string
+	Abstract   string
+	Embeddings []float32
+	Doi        string
 }
 
 const jsonSchema = `{
@@ -47,14 +47,14 @@ func Convert(data interface{}) *Document {
 	})
 
 	doc := &Document{
-		Abstract: result.Abstract,
-		Doi:      result.Doi,
+		Abstract: *result.Abstract,
+		Doi:      *result.Doi,
 	}
 	embeddings := make([]float32, len(result.Embeddings.List))
 	for i, emb := range result.Embeddings.List {
 		embeddings[i] = *emb.Item
 	}
-	doc.Embeddings = &embeddings
+	doc.Embeddings = embeddings
 	return doc
 }
 
@@ -79,9 +79,9 @@ func main() {
 	}
 
 	doc := Convert(res[int(pr.GetNumRows())-1])
-	log.Println(*doc.Abstract)
-	log.Println(*doc.Doi)
-	log.Println(*doc.Embeddings)
+	log.Println(doc.Abstract)
+	log.Println(doc.Doi)
+	log.Println(doc.Embeddings)
 
 	pr.ReadStop()
 	fr.Close()
