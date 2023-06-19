@@ -1,0 +1,5 @@
+prompt: Represent the Research Paper abstract for retrieval; Input:
+type: abstract
+time string: 20230518-180240
+model: InstructorXL
+version: 2.0
