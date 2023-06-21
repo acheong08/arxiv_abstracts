@@ -6,11 +6,12 @@ on:
       - created
 
 jobs:
-  download_files:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Set up working directory
         run: cd ${{ github.workspace }}
+
       - name: Install Python and gdown
         run: |
           sudo apt-get install -y python3
@@ -20,12 +21,6 @@ jobs:
         run: |
           gdown https://drive.google.com/uc?id=1g3K-wlixFxklTSUQNZKpEgN4WNTFTPIZ
 
-  put_stuff_in_right_places:
-    needs: download_files
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up working directory
-        run: cd ${{ github.workspace }}
       - name: Unzip arxiv_abstracts.zip
         run: unzip arxiv_abstracts.zip
 
@@ -38,45 +33,20 @@ jobs:
       - name: Create converted directory
         run: mkdir converted
 
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Set up working directory
-      run: cd ${{ github.workspace }}
-    - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.19
+      - name: Build Go project
+        run: go build -o main .
 
-    - name: Build
-      run: go build -o main .
-
-  run_main:
-    needs: [download_files, put_stuff_in_right_places, build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up working directory
-        run: cd ${{ github.workspace }}
       - name: Run ./main
         run: ./main
 
-  create_zip:
-    needs: run_main
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up working directory
-        run: cd ${{ github.workspace }}
       - name: Create zip file
         run: zip -r converted.zip converted
 
-  upload_release:
-    needs: create_zip
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up working directory
-        run: cd ${{ github.workspace }}
       - name: Get existing release body
         id: get_release_body
         run: |
