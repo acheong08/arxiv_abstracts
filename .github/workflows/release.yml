@@ -9,6 +9,8 @@ jobs:
   download_files:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up working directory
+        run: cd ${{ github.workspace }}
       - name: Install Python and gdown
         run: |
           sudo apt-get install -y python3
@@ -22,6 +24,8 @@ jobs:
     needs: download_files
     runs-on: ubuntu-latest
     steps:
+      - name: Set up working directory
+        run: cd ${{ github.workspace }}
       - name: Unzip arxiv_abstracts.zip
         run: unzip arxiv_abstracts.zip
 
@@ -37,6 +41,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Set up working directory
+      run: cd ${{ github.workspace }}
     - uses: actions/checkout@v3
 
     - name: Set up Go
@@ -51,6 +57,8 @@ jobs:
     needs: [download_files, put_stuff_in_right_places, build]
     runs-on: ubuntu-latest
     steps:
+      - name: Set up working directory
+        run: cd ${{ github.workspace }}
       - name: Run ./main
         run: ./main
 
@@ -58,6 +66,8 @@ jobs:
     needs: run_main
     runs-on: ubuntu-latest
     steps:
+      - name: Set up working directory
+        run: cd ${{ github.workspace }}
       - name: Create zip file
         run: zip -r converted.zip converted
 
@@ -65,6 +75,8 @@ jobs:
     needs: create_zip
     runs-on: ubuntu-latest
     steps:
+      - name: Set up working directory
+        run: cd ${{ github.workspace }}
       - name: Get existing release body
         id: get_release_body
         run: |
