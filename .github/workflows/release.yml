@@ -34,14 +34,21 @@ jobs:
       - name: Create converted directory
         run: mkdir converted
 
-  build_go_project:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Build Go project
-        run: go build -o main .
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
+    - name: Build
+      run: go build -o main .
 
   run_main:
-    needs: [download_files, put_stuff_in_right_places, build_go_project]
+    needs: [download_files, put_stuff_in_right_places, build]
     runs-on: ubuntu-latest
     steps:
       - name: Run ./main
