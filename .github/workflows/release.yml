@@ -19,7 +19,7 @@ jobs:
 
       - name: Download files
         run: |
-          gdown https://drive.google.com/uc?id=1g3K-wlixFxklTSUQNZKpEgN4WNTFTPIZ
+          gdown https://drive.google.com/uc?id=1hA4SyQFEgotNIQSCyVzdwZuuB-bdGCn2
 
       - name: Unzip arxiv_abstracts.zip
         run: unzip arxiv_abstracts.zip
