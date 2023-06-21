@@ -46,6 +46,9 @@ jobs:
       - name: Run Go binary
         run: ./main
 
+      - name: Delete .parquet files
+        run: rm -rf abstracts
+
       - name: recursively list files
         run: ls -R
 
