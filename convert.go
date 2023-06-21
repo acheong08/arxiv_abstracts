@@ -107,6 +107,7 @@ func main() {
 	// List all files in abstracts/
 	files, _ := os.ReadDir("abstracts/")
 	for _, file := range files {
+		log.Println("Converting ", file.Name())
 		convert(file.Name())
 	}
 }
