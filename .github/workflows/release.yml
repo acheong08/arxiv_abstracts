@@ -1,5 +1,4 @@
 name: Release Workflow
-timeout-minutes: 240
 on:
   release:
     types:
@@ -8,6 +7,7 @@ permissions:
   contents: write
 jobs:
   release:
+    timeout-minutes: 240
     runs-on: ubuntu-latest
     steps:
       - name: Set up working directory
