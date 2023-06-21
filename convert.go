@@ -37,7 +37,7 @@ const jsonSchema = `{
 }
 `
 
-func Convert(data interface{}) *Document {
+func parquet_to_struct(data interface{}) *Document {
 	// Convert res to the actual result type
 	result := data.(struct {
 		Abstract   *string
@@ -61,9 +61,9 @@ func Convert(data interface{}) *Document {
 	return doc
 }
 
-func main() {
+func convert(filename string) {
 	///read
-	fr, err := local.NewLocalFileReader("abstracts/abstracts_1.parquet")
+	fr, err := local.NewLocalFileReader("abstracts/" + filename)
 	if err != nil {
 		log.Println("Can't open file")
 		return
@@ -88,7 +88,7 @@ func main() {
 	documents := make([]Document, num_rows)
 
 	for i := 0; i < num_rows; i++ {
-		documents[i] = *Convert(res[i])
+		documents[i] = *parquet_to_struct(res[i])
 	}
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -96,9 +96,17 @@ func main() {
 	if err != nil {
 		log.Println("encode error:", err)
 	}
-	err = os.WriteFile("converted/abstracts_1.gob", buf.Bytes(), 0644)
+	err = os.WriteFile("converted/"+filename+".gob", buf.Bytes(), 0644)
 	if err != nil {
 		log.Println("write error:", err)
 	}
 
+}
+
+func main() {
+	// List all files in abstracts/
+	files, _ := os.ReadDir("abstracts/")
+	for _, file := range files {
+		convert(file.Name())
+	}
 }
