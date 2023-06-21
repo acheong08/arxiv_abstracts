@@ -40,7 +40,16 @@ jobs:
           go-version: 1.19
 
       - name: Build Go project
-        run: go run .
+        run: go build -o main .
+
+      - name: Copy the Go binary to workspace
+        run: cp main ${{ github.workspace }}/
+
+      - name: Change directory to workspace
+        run: cd ${{ github.workspace }}
+
+      - name: Run Go binary
+        run: ./main
 
       - name: recursively list files
         run: ls -R
