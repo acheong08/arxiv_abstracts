@@ -87,8 +87,8 @@ func main() {
 
 	documents := make([]Document, num_rows)
 
-	for i := 0; i < num_rows-1; i++ {
-		documents[i] = *Convert(res[num_rows])
+	for i := 0; i < num_rows; i++ {
+		documents[i] = *Convert(res[i])
 	}
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
