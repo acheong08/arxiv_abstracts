@@ -1,0 +1,73 @@
+name: Release Workflow
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  download_files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Python and gdown
+        run: |
+          sudo apt-get install -y python3
+          pip install gdown
+
+      - name: Download files
+        run: |
+          gdown https://drive.google.com/uc?id=1g3K-wlixFxklTSUQNZKpEgN4WNTFTPIZ
+
+  put_stuff_in_right_places:
+    needs: download_files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unzip arxiv_abstracts.zip
+        run: unzip arxiv_abstracts.zip
+
+      - name: Create abstracts directory
+        run: mkdir abstracts
+
+      - name: Move .parquet files to abstracts directory
+        run: mv arxiv_abstracts/*.parquet abstracts/
+
+      - name: Create converted directory
+        run: mkdir converted
+
+  build_go_project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Go project
+        run: go build -o main .
+
+  run_main:
+    needs: [download_files, put_stuff_in_right_places, build_go_project]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run ./main
+        run: ./main
+
+  create_zip:
+    needs: run_main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create zip file
+        run: zip -r converted.zip converted
+
+  upload_release:
+    needs: create_zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get existing release body
+        id: get_release_body
+        run: |
+          echo "::set-output name=body::$(curl -s -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_path }} | jq -r '.body')"
+
+      - name: Upload release artifact
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: converted.zip
+          tag: ${{ github.ref }}
+          body: |
+            ${{ steps.get_release_body.outputs.body }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
