@@ -1,16 +1,19 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"log"
+	"os"
 
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
 )
 
 type Document struct {
-	Abstract   string
-	Embeddings []float32
-	Doi        string
+	Text      string
+	Embedding []float32
+	Doi       string
 }
 
 const jsonSchema = `{
@@ -47,14 +50,14 @@ func Convert(data interface{}) *Document {
 	})
 
 	doc := &Document{
-		Abstract: *result.Abstract,
-		Doi:      *result.Doi,
+		Text: *result.Abstract,
+		Doi:  *result.Doi,
 	}
 	embeddings := make([]float32, len(result.Embeddings.List))
 	for i, emb := range result.Embeddings.List {
 		embeddings[i] = *emb.Item
 	}
-	doc.Embeddings = embeddings
+	doc.Embedding = embeddings
 	return doc
 }
 
@@ -72,17 +75,30 @@ func main() {
 		return
 	}
 
-	res, err := pr.ReadByNumber(int(pr.GetNumRows()))
+	num_rows := int(pr.GetNumRows())
+
+	res, err := pr.ReadByNumber(num_rows)
 	if err != nil {
 		log.Println("Can't read", err)
 		return
 	}
-
-	doc := Convert(res[int(pr.GetNumRows())-1])
-	log.Println(doc.Abstract)
-	log.Println(doc.Doi)
-	log.Println(doc.Embeddings)
-
 	pr.ReadStop()
 	fr.Close()
+
+	documents := make([]Document, num_rows)
+
+	for i := 0; i < num_rows-1; i++ {
+		documents[i] = *Convert(res[num_rows])
+	}
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err = enc.Encode(documents)
+	if err != nil {
+		log.Println("encode error:", err)
+	}
+	err = os.WriteFile("converted/abstracts_1.gob", buf.Bytes(), 0644)
+	if err != nil {
+		log.Println("write error:", err)
+	}
+
 }
