@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/gob"
 	"log"
 	"os"
@@ -37,7 +36,7 @@ const jsonSchema = `{
 }
 `
 
-func parquet_to_struct(data interface{}) *Document {
+func parquetToStruct(data interface{}) *Document {
 	// Convert res to the actual result type
 	result := data.(struct {
 		Abstract   *string
@@ -61,53 +60,72 @@ func parquet_to_struct(data interface{}) *Document {
 	return doc
 }
 
-func convert(filename string) {
-	///read
+func convertFile(filename string) error {
 	fr, err := local.NewLocalFileReader("abstracts/" + filename)
 	if err != nil {
-		log.Println("Can't open file")
-		return
+		return err
 	}
+	defer fr.Close()
 
 	pr, err := reader.NewParquetReader(fr, jsonSchema, 4)
 	if err != nil {
-		log.Println("Can't create parquet reader", err)
-		return
+		return err
 	}
+	defer pr.ReadStop()
 
-	num_rows := int(pr.GetNumRows())
+	numRows := int(pr.GetNumRows())
 
-	res, err := pr.ReadByNumber(num_rows)
+	// Create the output file
+	outputFile, err := os.Create("converted/" + filename + ".gob")
 	if err != nil {
-		log.Println("Can't read", err)
-		return
+		return err
 	}
-	pr.ReadStop()
-	fr.Close()
+	defer outputFile.Close()
 
-	documents := make([]Document, num_rows)
+	enc := gob.NewEncoder(outputFile)
 
-	for i := 0; i < num_rows; i++ {
-		documents[i] = *parquet_to_struct(res[i])
-	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err = enc.Encode(documents)
-	if err != nil {
-		log.Println("encode error:", err)
-	}
-	err = os.WriteFile("converted/"+filename+".gob", buf.Bytes(), 0644)
-	if err != nil {
-		log.Println("write error:", err)
+	batchSize := 1000 // Adjust the batch size as per your memory requirements
+
+	for i := 0; i < numRows; i += batchSize {
+		// Read a batch of rows
+		batchSizeActual := batchSize
+		if i+batchSize > numRows {
+			batchSizeActual = numRows - i
+		}
+
+		res, err := pr.ReadByNumber(batchSizeActual)
+		if err != nil {
+			return err
+		}
+
+		// Convert and encode the documents in the batch
+		documents := make([]Document, batchSizeActual)
+		for j := 0; j < batchSizeActual; j++ {
+			documents[j] = *parquetToStruct(res[j])
+		}
+
+		// Encode and write the documents to the output file
+		err = enc.Encode(documents)
+		if err != nil {
+			return err
+		}
 	}
 
+	return nil
 }
 
 func main() {
 	// List all files in abstracts/
-	files, _ := os.ReadDir("abstracts/")
+	files, err := os.ReadDir("abstracts/")
+	if err != nil {
+		log.Fatal("Error reading directory:", err)
+	}
+
 	for _, file := range files {
-		log.Println("Converting ", file.Name())
-		convert(file.Name())
+		log.Println("Converting", file.Name())
+		err := convertFile(file.Name())
+		if err != nil {
+			log.Println("Conversion error:", err)
+		}
 	}
 }
