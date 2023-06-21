@@ -87,6 +87,7 @@ func convertFile(filename string) error {
 	batchSize := 1000 // Adjust the batch size as per your memory requirements
 
 	for i := 0; i < numRows; i += batchSize {
+		print(".")
 		// Read a batch of rows
 		batchSizeActual := batchSize
 		if i+batchSize > numRows {
