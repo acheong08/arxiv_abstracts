@@ -1,5 +1,5 @@
 name: Release Workflow
-
+timeout-minutes: 120
 on:
   release:
     types:
