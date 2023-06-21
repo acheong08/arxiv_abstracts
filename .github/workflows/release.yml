@@ -49,9 +49,6 @@ jobs:
       - name: recursively list files
         run: ls -R
 
-      - name: Create zip file
-        run: zip -r converted.zip converted
-
       - name: Get existing release body
         id: get_release_body
         run: |
@@ -60,7 +57,8 @@ jobs:
       - name: Upload release artifact
         uses: svenstaro/upload-release-action@v2
         with:
-          file: converted.zip
+          file: converted/*
+          file_glob: true
           tag: ${{ github.ref }}
           body: |
             ${{ steps.get_release_body.outputs.body }}
